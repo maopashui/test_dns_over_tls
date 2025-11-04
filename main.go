@@ -54,9 +54,9 @@ func main() {
 	}
 	log.Info("配置已从数据库加载")
 
-	// 创建广告域名拦截器
-	blockList := blocker.NewBlockList(&cfg.BlockList, log)
-	log.Infof("已加载 %d 条广告域名记录", blockList.GetDomainsCount())
+	// 创建广告域名拦截器（延迟加载黑名单）
+	blockList := blocker.NewBlockList(&cfg.BlockList, log, false)
+	log.Info("广告域名拦截器已创建（黑名单延迟加载）")
 
 	// 创建DNS服务器
 	dnsServer, err := dns.NewDNSServer(cfg, blockList, log)
@@ -82,6 +82,16 @@ func main() {
 		}
 	}()
 	log.Infof("API服务已启动在端口 %d", cfg.API.Port)
+
+	// 服务启动完成后，异步加载黑名单
+	go func() {
+		log.Info("开始异步加载黑名单...")
+		if err := blockList.Update(); err != nil {
+			log.Errorf("加载黑名单失败: %v", err)
+		} else {
+			log.Infof("黑名单加载完成，共 %d 条广告域名记录", blockList.GetDomainsCount())
+		}
+	}()
 
 	// 等待中断信号停止服务
 	sigChan := make(chan os.Signal, 1)

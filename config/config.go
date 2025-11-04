@@ -266,8 +266,8 @@ func getDefaultConfig() *Config {
 			UpdateInterval: 24,
 		},
 		API: APIConfig{
-			Port:      8080,
-			Host:      "127.0.0.1",
+			Port:      18080,
+			Host:      "0.0.0.0",
 			JWTSecret: "default-jwt-secret-please-change",
 		},
 		Auth: AuthConfig{

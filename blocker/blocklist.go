@@ -31,7 +31,8 @@ type Stats struct {
 }
 
 // NewBlockList 创建一个新的广告域名列表管理器
-func NewBlockList(cfg *config.BlockListConfig, logger *logrus.Logger) *BlockList {
+// autoLoad: 是否在初始化时自动加载黑名单（true=立即加载，false=延迟加载）
+func NewBlockList(cfg *config.BlockListConfig, logger *logrus.Logger, autoLoad bool) *BlockList {
 	bl := &BlockList{
 		blockedDomains: make(map[string]bool),
 		whitelist:      make(map[string]bool),
@@ -49,8 +50,12 @@ func NewBlockList(cfg *config.BlockListConfig, logger *logrus.Logger) *BlockList
 		bl.whitelist[domain] = true
 	}
 
-	// 初始加载广告域名列表
-	bl.Update()
+	// 根据参数决定是否立即加载广告域名列表
+	if autoLoad {
+		bl.Update()
+	} else {
+		logger.Info("黑名单将延迟加载，等待服务启动完成")
+	}
 
 	// 启动定时更新
 	go bl.scheduleUpdates(cfg.UpdateInterval)
